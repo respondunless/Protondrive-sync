@@ -281,19 +281,21 @@ copy_files() {
     mkdir -p "$INSTALL_DIR"
     
     # Copy source files
-    cp -r "$SCRIPT_DIR/src" "$INSTALL_DIR/"
+    cp -r "$SCRIPT_DIR/protondrive_sync" "$INSTALL_DIR/"
     cp "$SCRIPT_DIR/README.md" "$INSTALL_DIR/" 2>/dev/null || true
-    cp "$SCRIPT_DIR/QUICK_START.md" "$INSTALL_DIR/" 2>/dev/null || true
-    cp "$SCRIPT_DIR/INSTALLATION_GUIDE.md" "$INSTALL_DIR/" 2>/dev/null || true
+    cp "$SCRIPT_DIR/docs/setup/QUICK_START.md" "$INSTALL_DIR/" 2>/dev/null || true
+    cp "$SCRIPT_DIR/docs/setup/INSTALLATION_GUIDE.md" "$INSTALL_DIR/" 2>/dev/null || true
+    cp "$SCRIPT_DIR/docs/setup/PROTONDRIVE_SETUP.md" "$INSTALL_DIR/" 2>/dev/null || true
     cp "$SCRIPT_DIR/LICENSE" "$INSTALL_DIR/" 2>/dev/null || true
     cp "$SCRIPT_DIR/uninstall.sh" "$INSTALL_DIR/" 2>/dev/null || true
+    cp "$SCRIPT_DIR/requirements.txt" "$INSTALL_DIR/" 2>/dev/null || true
     
     # Create executable wrapper script
     cat > "$INSTALL_DIR/protondrive-sync" << 'EOF'
 #!/bin/bash
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
-python3 -m src.main "$@"
+python3 -m protondrive_sync.main "$@"
 EOF
     
     chmod +x "$INSTALL_DIR/protondrive-sync"
@@ -506,8 +508,15 @@ main() {
     fi
     
     echo -e "${CYAN}📖 Documentation:${NC}"
-    echo -e "  ${WHITE}Quick Start:${NC} $INSTALL_DIR/QUICK_START.md"
-    echo -e "  ${WHITE}ProtonDrive Setup:${NC} $INSTALL_DIR/PROTONDRIVE_SETUP.md"
+    if [ -f "$INSTALL_DIR/QUICK_START.md" ]; then
+        echo -e "  ${WHITE}Quick Start:${NC} $INSTALL_DIR/QUICK_START.md"
+    fi
+    if [ -f "$INSTALL_DIR/INSTALLATION_GUIDE.md" ]; then
+        echo -e "  ${WHITE}Installation Guide:${NC} $INSTALL_DIR/INSTALLATION_GUIDE.md"
+    fi
+    if [ -f "$INSTALL_DIR/PROTONDRIVE_SETUP.md" ]; then
+        echo -e "  ${WHITE}ProtonDrive Setup:${NC} $INSTALL_DIR/PROTONDRIVE_SETUP.md"
+    fi
     echo ""
     
     # Check if rclone is configured
