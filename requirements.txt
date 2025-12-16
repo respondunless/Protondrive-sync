@@ -1,0 +1,11 @@
+# ProtonDrive Sync Dependencies
+
+# GUI Framework
+PyQt5>=5.15.0
+
+# No additional dependencies needed - uses Python stdlib for:
+# - json (config management)
+# - subprocess (rclone execution)
+# - threading (background sync)
+# - logging (activity logging)
+# - pathlib (path handling)
