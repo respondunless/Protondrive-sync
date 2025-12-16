@@ -42,6 +42,10 @@ class ProtonDriveAuthPage(QWizardPage):
         welcome.setWordWrap(True)
         layout.addWidget(welcome)
         
+        # Create the remote field widget first (needed for wizard field registration)
+        self.remote_field = QLineEdit()
+        self.remote_field.setVisible(False)
+        
         # Check if ProtonDrive is configured
         has_pd, pd_remote = self.rclone.has_protondrive_remote()
         
@@ -55,7 +59,7 @@ class ProtonDriveAuthPage(QWizardPage):
             layout.addWidget(success_label)
             
             self.remote_name = pd_remote
-            self.setField("protondrive_remote", pd_remote)
+            self.remote_field.setText(pd_remote)
         else:
             # Need to configure ProtonDrive
             warning_label = QLabel(
@@ -101,11 +105,13 @@ class ProtonDriveAuthPage(QWizardPage):
             self.status_label = QLabel("")
             layout.addWidget(self.status_label)
         
+        # Add the hidden field widget to the layout
+        layout.addWidget(self.remote_field)
         layout.addStretch()
         self.setLayout(layout)
         
-        # Register field
-        self.registerField("protondrive_remote*", QLineEdit())
+        # Register field with the widget
+        self.registerField("protondrive_remote*", self.remote_field)
     
     def launch_rclone_config(self):
         """Launch modern ProtonDrive configuration wizard."""
@@ -128,7 +134,7 @@ class ProtonDriveAuthPage(QWizardPage):
             self.status_label.setText(f"<p style='color: green;'>✅ ProtonDrive found: <b>{pd_remote}</b></p>")
             self.status_label.setStyleSheet("color: green;")
             self.remote_name = pd_remote
-            self.setField("protondrive_remote", pd_remote)
+            self.remote_field.setText(pd_remote)
             QMessageBox.information(
                 self,
                 "Success!",

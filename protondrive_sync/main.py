@@ -29,6 +29,11 @@ class ProtonDriveSyncApp:
         self.logger.info("=" * 50)
         self.logger.info("ProtonDrive Sync starting...")
         
+        # Create Qt application FIRST (before any GUI operations)
+        self.app = QApplication(sys.argv)
+        self.app.setApplicationName("ProtonDrive Sync")
+        self.app.setQuitOnLastWindowClosed(False)  # Keep running in tray
+        
         # Initialize components
         self.config = ConfigManager()
         self.rclone = RcloneManager(self.logger)
@@ -50,11 +55,6 @@ class ProtonDriveSyncApp:
         
         version = self.rclone.get_version()
         self.logger.info(f"Rclone version: {version}")
-        
-        # Create Qt application
-        self.app = QApplication(sys.argv)
-        self.app.setApplicationName("ProtonDrive Sync")
-        self.app.setQuitOnLastWindowClosed(False)  # Keep running in tray
         
         # Create main window
         self.main_window = MainWindow(
