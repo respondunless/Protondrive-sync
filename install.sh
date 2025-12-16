@@ -113,10 +113,33 @@ detect_distro() {
 
 check_sudo() {
     if [[ "$INSTALL_TYPE" == "system" ]]; then
+        print_step "Checking sudo permissions..."
+        
+        # Try to get sudo access
         if ! sudo -v &>/dev/null; then
+            echo ""
             print_error "System-wide installation requires sudo privileges"
+            echo ""
+            echo -e "${YELLOW}╔════════════════════════════════════════════════════════════╗${NC}"
+            echo -e "${YELLOW}║                  Permission Required                       ║${NC}"
+            echo -e "${YELLOW}╚════════════════════════════════════════════════════════════╝${NC}"
+            echo ""
+            echo -e "${WHITE}To install system-wide, you need sudo access.${NC}"
+            echo ""
+            echo -e "${CYAN}Option 1 - Run with sudo:${NC}"
+            echo -e "  ${WHITE}sudo bash install.sh${NC}"
+            echo ""
+            echo -e "${CYAN}Option 2 - User-only install (no sudo needed):${NC}"
+            echo -e "  Run the installer again and choose option 2"
+            echo -e "  This installs to ~/.local/share (only for your user)"
+            echo ""
             exit 1
         fi
+        
+        # Keep sudo alive in background
+        (while true; do sudo -n true; sleep 50; done 2>/dev/null) &
+        SUDO_REFRESH_PID=$!
+        
         print_success "Sudo privileges confirmed"
     fi
 }
@@ -277,29 +300,51 @@ install_python_packages() {
 copy_files() {
     print_step "Installing application files..."
     
-    # Create installation directory
-    mkdir -p "$INSTALL_DIR"
+    # Determine if we need sudo for file operations
+    local USE_SUDO=""
+    if [[ "$INSTALL_TYPE" == "system" ]]; then
+        USE_SUDO="sudo"
+    fi
     
-    # Copy source files
-    cp -r "$SCRIPT_DIR/protondrive_sync" "$INSTALL_DIR/"
-    cp "$SCRIPT_DIR/README.md" "$INSTALL_DIR/" 2>/dev/null || true
-    cp "$SCRIPT_DIR/docs/setup/QUICK_START.md" "$INSTALL_DIR/" 2>/dev/null || true
-    cp "$SCRIPT_DIR/docs/setup/INSTALLATION_GUIDE.md" "$INSTALL_DIR/" 2>/dev/null || true
-    cp "$SCRIPT_DIR/docs/setup/PROTONDRIVE_SETUP.md" "$INSTALL_DIR/" 2>/dev/null || true
-    cp "$SCRIPT_DIR/LICENSE" "$INSTALL_DIR/" 2>/dev/null || true
-    cp "$SCRIPT_DIR/uninstall.sh" "$INSTALL_DIR/" 2>/dev/null || true
-    cp "$SCRIPT_DIR/requirements.txt" "$INSTALL_DIR/" 2>/dev/null || true
+    # Create installation directory (idempotent)
+    if [ ! -d "$INSTALL_DIR" ]; then
+        print_info "Creating installation directory: $INSTALL_DIR"
+        $USE_SUDO mkdir -p "$INSTALL_DIR" || {
+            print_error "Failed to create installation directory"
+            print_info "Make sure you have permission to create $INSTALL_DIR"
+            exit 1
+        }
+    else
+        print_info "Installation directory already exists (updating files)"
+    fi
+    
+    # Copy source files (will overwrite if exists - making it idempotent)
+    print_info "Copying application files..."
+    $USE_SUDO cp -rf "$SCRIPT_DIR/protondrive_sync" "$INSTALL_DIR/" || {
+        print_error "Failed to copy application files"
+        exit 1
+    }
+    
+    # Copy documentation files (optional, won't fail if missing)
+    $USE_SUDO cp "$SCRIPT_DIR/README.md" "$INSTALL_DIR/" 2>/dev/null || true
+    $USE_SUDO cp "$SCRIPT_DIR/docs/setup/QUICK_START.md" "$INSTALL_DIR/" 2>/dev/null || true
+    $USE_SUDO cp "$SCRIPT_DIR/docs/setup/INSTALLATION_GUIDE.md" "$INSTALL_DIR/" 2>/dev/null || true
+    $USE_SUDO cp "$SCRIPT_DIR/docs/setup/PROTONDRIVE_SETUP.md" "$INSTALL_DIR/" 2>/dev/null || true
+    $USE_SUDO cp "$SCRIPT_DIR/LICENSE" "$INSTALL_DIR/" 2>/dev/null || true
+    $USE_SUDO cp "$SCRIPT_DIR/uninstall.sh" "$INSTALL_DIR/" 2>/dev/null || true
+    $USE_SUDO cp "$SCRIPT_DIR/requirements.txt" "$INSTALL_DIR/" 2>/dev/null || true
     
     # Create executable wrapper script
-    cat > "$INSTALL_DIR/protondrive-sync" << 'EOF'
+    print_info "Creating launcher script..."
+    $USE_SUDO tee "$INSTALL_DIR/protondrive-sync" > /dev/null << 'EOF'
 #!/bin/bash
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 python3 -m protondrive_sync.main "$@"
 EOF
     
-    chmod +x "$INSTALL_DIR/protondrive-sync"
-    chmod +x "$INSTALL_DIR/uninstall.sh" 2>/dev/null || true
+    $USE_SUDO chmod +x "$INSTALL_DIR/protondrive-sync"
+    $USE_SUDO chmod +x "$INSTALL_DIR/uninstall.sh" 2>/dev/null || true
     
     print_success "Application files installed to $INSTALL_DIR"
 }
@@ -308,15 +353,19 @@ create_desktop_entry() {
     print_step "Creating desktop integration..."
     
     local desktop_dir
+    local USE_SUDO=""
+    
     if [[ "$INSTALL_TYPE" == "system" ]]; then
         desktop_dir="/usr/share/applications"
+        USE_SUDO="sudo"
+        $USE_SUDO mkdir -p "$desktop_dir"
     else
         desktop_dir="$HOME/.local/share/applications"
         mkdir -p "$desktop_dir"
     fi
     
     # Create desktop entry
-    cat > "$desktop_dir/protondrive-sync.desktop" << EOF
+    $USE_SUDO tee "$desktop_dir/protondrive-sync.desktop" > /dev/null << EOF
 [Desktop Entry]
 Name=ProtonDrive Sync
 Comment=Sync your files with ProtonDrive
@@ -329,11 +378,15 @@ Keywords=proton;drive;sync;cloud;backup;
 StartupNotify=true
 EOF
     
-    chmod +x "$desktop_dir/protondrive-sync.desktop"
+    $USE_SUDO chmod +x "$desktop_dir/protondrive-sync.desktop"
     
     # Update desktop database
     if command -v update-desktop-database &>/dev/null; then
-        update-desktop-database "$desktop_dir" 2>/dev/null || true
+        if [[ -n "$USE_SUDO" ]]; then
+            sudo update-desktop-database "$desktop_dir" 2>/dev/null || true
+        else
+            update-desktop-database "$desktop_dir" 2>/dev/null || true
+        fi
     fi
     
     print_success "Desktop entry created - app will appear in your application menu!"
@@ -553,6 +606,11 @@ main() {
     echo ""
     echo -e "${CYAN}Thank you for using ProtonDrive Sync! ${ROCKET}${NC}"
     echo ""
+    
+    # Cleanup sudo refresh process
+    if [[ -n "${SUDO_REFRESH_PID:-}" ]]; then
+        kill "$SUDO_REFRESH_PID" 2>/dev/null || true
+    fi
 }
 
 # Run main installation
