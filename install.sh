@@ -715,7 +715,21 @@ main() {
             echo -e "  4. Follow the authentication steps"
             echo ""
             read -p "Press Enter to continue..." < /dev/tty
-            rclone config
+            
+            # Run rclone config with proper terminal redirection
+            if rclone config < /dev/tty > /dev/tty 2>&1; then
+                print_success "rclone configuration completed!"
+            else
+                print_warning "rclone configuration was interrupted or failed"
+                echo -e "${CYAN}No problem! You can configure rclone later by running:${NC}"
+                echo -e "  ${WHITE}rclone config${NC}"
+                echo ""
+                echo -e "${CYAN}Or the app will guide you through setup on first run.${NC}"
+            fi
+        else
+            echo ""
+            print_info "You can configure rclone later by running: ${WHITE}rclone config${NC}"
+            print_info "Or the app will guide you through setup on first run!"
         fi
     fi
     
