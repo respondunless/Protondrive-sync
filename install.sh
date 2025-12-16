@@ -700,37 +700,17 @@ main() {
     
     # Check if rclone is configured
     if ! rclone listremotes 2>/dev/null | grep -q "protondrive"; then
-        print_warning "rclone doesn't seem to be configured yet"
-        echo -e "${CYAN}You'll need to set up rclone with your ProtonDrive account.${NC}"
-        echo -e "${CYAN}The app will guide you through this on first run!${NC}"
         echo ""
-        
-        if ask_yes_no "Would you like to configure rclone now?" "y"; then
-            echo ""
-            print_info "Starting rclone configuration..."
-            echo -e "${YELLOW}When prompted:${NC}"
-            echo -e "  1. Choose 'n' for new remote"
-            echo -e "  2. Name it '${WHITE}protondrive${NC}'"
-            echo -e "  3. Select 'Proton Drive' from the list"
-            echo -e "  4. Follow the authentication steps"
-            echo ""
-            read -p "Press Enter to continue..." < /dev/tty
-            
-            # Run rclone config with proper terminal redirection
-            if rclone config < /dev/tty > /dev/tty 2>&1; then
-                print_success "rclone configuration completed!"
-            else
-                print_warning "rclone configuration was interrupted or failed"
-                echo -e "${CYAN}No problem! You can configure rclone later by running:${NC}"
-                echo -e "  ${WHITE}rclone config${NC}"
-                echo ""
-                echo -e "${CYAN}Or the app will guide you through setup on first run.${NC}"
-            fi
-        else
-            echo ""
-            print_info "You can configure rclone later by running: ${WHITE}rclone config${NC}"
-            print_info "Or the app will guide you through setup on first run!"
-        fi
+        print_info "ProtonDrive not configured yet - no problem!"
+        echo -e "${CYAN}┌─────────────────────────────────────────────────────┐${NC}"
+        echo -e "${CYAN}│  ${WHITE}The app includes a modern, user-friendly wizard${CYAN}  │${NC}"
+        echo -e "${CYAN}│  ${WHITE}that will guide you through ProtonDrive setup${CYAN}   │${NC}"
+        echo -e "${CYAN}│  ${WHITE}on first launch!${CYAN}                                │${NC}"
+        echo -e "${CYAN}└─────────────────────────────────────────────────────┘${NC}"
+        echo ""
+        print_success "No manual rclone configuration needed!"
+    else
+        print_success "ProtonDrive is already configured!"
     fi
     
     echo ""
