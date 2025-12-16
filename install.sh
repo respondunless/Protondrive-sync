@@ -78,7 +78,7 @@ ask_yes_no() {
     fi
     
     while true; do
-        read -p "$(echo -e ${YELLOW}${prompt}${NC})" response
+        read -p "$(echo -e ${YELLOW}${prompt}${NC})" response < /dev/tty
         response=${response:-$default}
         case "$response" in
             [Yy]* ) return 0;;
@@ -419,7 +419,7 @@ main() {
     echo ""
     
     while true; do
-        read -p "$(echo -e ${YELLOW}Choose [1-2]: ${NC})" choice
+        read -p "$(echo -e ${YELLOW}Choose [1-2]: ${NC})" choice < /dev/tty
         case $choice in
             1)
                 INSTALL_TYPE="system"
@@ -535,7 +535,7 @@ main() {
             echo -e "  3. Select 'Proton Drive' from the list"
             echo -e "  4. Follow the authentication steps"
             echo ""
-            read -p "Press Enter to continue..."
+            read -p "Press Enter to continue..." < /dev/tty
             rclone config
         fi
     fi
