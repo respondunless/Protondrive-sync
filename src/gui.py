@@ -27,23 +27,34 @@ class SetupWizard(QDialog):
         self.rclone = rclone
         self.setWindowTitle("ProtonDrive Sync - Setup Wizard")
         self.setModal(True)
-        self.setMinimumWidth(500)
+        self.setMinimumWidth(600)
         self.setup_ui()
     
     def setup_ui(self):
         layout = QVBoxLayout()
         
-        # Welcome message
+        # Welcome message with better instructions
         welcome_label = QLabel(
-            "<h2>Welcome to ProtonDrive Sync!</h2>"
-            "<p>Let's configure your sync settings.</p>"
+            "<h2>🚀 Welcome to ProtonDrive Sync!</h2>"
+            "<p>Let's get you set up in just a few steps. This will only take a minute!</p>"
+            "<p style='color: #666;'><i>Don't worry - we'll guide you through everything.</i></p>"
         )
         welcome_label.setWordWrap(True)
         layout.addWidget(welcome_label)
         
-        # Rclone remote selection
-        remote_group = QGroupBox("Rclone Remote")
+        # Rclone remote selection with help
+        remote_group = QGroupBox("📡 Step 1: Select Your ProtonDrive Remote")
         remote_layout = QVBoxLayout()
+        
+        help_text = QLabel(
+            "<p>An rclone 'remote' is your connection to ProtonDrive.</p>"
+            "<p style='color: #666; font-size: 11px;'>"
+            "💡 <b>Tip:</b> If you don't see any remotes, you need to configure rclone first. "
+            "Click 'Configure rclone' button below to get started."
+            "</p>"
+        )
+        help_text.setWordWrap(True)
+        remote_layout.addWidget(help_text)
         
         remote_layout.addWidget(QLabel("Select your ProtonDrive remote:"))
         self.remote_combo = QComboBox()
@@ -52,14 +63,32 @@ class SetupWizard(QDialog):
         remotes = self.rclone.list_remotes()
         if remotes:
             self.remote_combo.addItems(remotes)
+            # Try to auto-select a protondrive remote
+            for remote in remotes:
+                if 'proton' in remote.lower():
+                    self.remote_combo.setCurrentText(remote)
+                    break
         else:
-            self.remote_combo.addItem("No remotes found")
+            self.remote_combo.addItem("⚠️ No remotes found - Configure rclone first!")
         
         remote_layout.addWidget(self.remote_combo)
         
-        test_btn = QPushButton("Test Remote")
+        # Buttons for remote management
+        remote_buttons = QHBoxLayout()
+        
+        test_btn = QPushButton("🔍 Test Remote")
         test_btn.clicked.connect(self.test_remote)
-        remote_layout.addWidget(test_btn)
+        remote_buttons.addWidget(test_btn)
+        
+        config_rclone_btn = QPushButton("🔧 Configure rclone")
+        config_rclone_btn.clicked.connect(self.configure_rclone)
+        remote_buttons.addWidget(config_rclone_btn)
+        
+        refresh_btn = QPushButton("🔄 Refresh List")
+        refresh_btn.clicked.connect(self.refresh_remotes)
+        remote_buttons.addWidget(refresh_btn)
+        
+        remote_layout.addLayout(remote_buttons)
         
         self.remote_status = QLabel("")
         remote_layout.addWidget(self.remote_status)
@@ -67,18 +96,27 @@ class SetupWizard(QDialog):
         remote_group.setLayout(remote_layout)
         layout.addWidget(remote_group)
         
-        # Local folder selection
-        folder_group = QGroupBox("Local Sync Folder")
+        # Local folder selection with better help
+        folder_group = QGroupBox("📁 Step 2: Choose Your Local Sync Folder")
         folder_layout = QVBoxLayout()
         
-        folder_layout.addWidget(QLabel("Choose where to sync your files:"))
+        folder_help = QLabel(
+            "<p>This is where your ProtonDrive files will be synced on your computer.</p>"
+            "<p style='color: #666; font-size: 11px;'>"
+            "💡 <b>Tip:</b> Choose a location with enough free space for your files. "
+            "We recommend ~/ProtonDrive or ~/Documents/ProtonDrive"
+            "</p>"
+        )
+        folder_help.setWordWrap(True)
+        folder_layout.addWidget(folder_help)
         
         folder_select_layout = QHBoxLayout()
         self.folder_edit = QLineEdit()
-        self.folder_edit.setPlaceholderText("/home/user/ProtonDrive")
+        self.folder_edit.setPlaceholderText(str(Path.home() / "ProtonDrive"))
+        self.folder_edit.setText(str(Path.home() / "ProtonDrive"))  # Set default
         folder_select_layout.addWidget(self.folder_edit)
         
-        browse_btn = QPushButton("Browse...")
+        browse_btn = QPushButton("📂 Browse...")
         browse_btn.clicked.connect(self.browse_folder)
         folder_select_layout.addWidget(browse_btn)
         
@@ -86,19 +124,29 @@ class SetupWizard(QDialog):
         folder_group.setLayout(folder_layout)
         layout.addWidget(folder_group)
         
-        # Auto sync settings
-        auto_group = QGroupBox("Auto Sync Settings")
+        # Auto sync settings with better explanations
+        auto_group = QGroupBox("⚙️ Step 3: Auto Sync Settings")
         auto_layout = QVBoxLayout()
         
-        self.auto_sync_check = QCheckBox("Enable automatic sync")
+        auto_help = QLabel(
+            "<p style='color: #666; font-size: 11px;'>"
+            "💡 Auto sync keeps your files updated automatically in the background."
+            "</p>"
+        )
+        auto_help.setWordWrap(True)
+        auto_layout.addWidget(auto_help)
+        
+        self.auto_sync_check = QCheckBox("✅ Enable automatic sync (recommended)")
+        self.auto_sync_check.setChecked(True)  # Enable by default
         auto_layout.addWidget(self.auto_sync_check)
         
         interval_layout = QHBoxLayout()
-        interval_layout.addWidget(QLabel("Sync interval (minutes):"))
+        interval_layout.addWidget(QLabel("Check for changes every:"))
         self.interval_spin = QSpinBox()
         self.interval_spin.setMinimum(5)
         self.interval_spin.setMaximum(1440)
         self.interval_spin.setValue(30)
+        self.interval_spin.setSuffix(" minutes")
         interval_layout.addWidget(self.interval_spin)
         interval_layout.addStretch()
         auto_layout.addLayout(interval_layout)
@@ -125,14 +173,89 @@ class SetupWizard(QDialog):
         if folder:
             self.folder_edit.setText(folder)
     
+    def configure_rclone(self):
+        """Open rclone configuration in terminal."""
+        msg = QMessageBox()
+        msg.setIcon(QMessageBox.Information)
+        msg.setWindowTitle("Configure rclone")
+        msg.setText("<h3>Setting up rclone for ProtonDrive</h3>")
+        msg.setInformativeText(
+            "<p>We'll open a terminal window where you can configure rclone.</p>"
+            "<p><b>Follow these steps:</b></p>"
+            "<ol>"
+            "<li>Choose <b>'n'</b> for new remote</li>"
+            "<li>Name it <b>'protondrive'</b> (or any name you like)</li>"
+            "<li>Select <b>'Proton Drive'</b> from the list</li>"
+            "<li>Follow the authentication steps</li>"
+            "</ol>"
+            "<p><i>The terminal will open in a moment...</i></p>"
+        )
+        msg.exec_()
+        
+        # Open terminal with rclone config
+        import subprocess
+        import os
+        
+        # Try different terminal emulators
+        terminals = [
+            ['x-terminal-emulator', '-e'],
+            ['gnome-terminal', '--'],
+            ['konsole', '-e'],
+            ['xfce4-terminal', '-e'],
+            ['xterm', '-e']
+        ]
+        
+        for term in terminals:
+            try:
+                subprocess.Popen(term + ['rclone', 'config'])
+                break
+            except FileNotFoundError:
+                continue
+        else:
+            # Fallback: show command to run
+            QMessageBox.warning(
+                self,
+                "Manual Configuration Required",
+                "<p>Could not open terminal automatically.</p>"
+                "<p>Please open a terminal and run:</p>"
+                "<pre>rclone config</pre>"
+                "<p>Then click 'Refresh List' when done.</p>"
+            )
+    
+    def refresh_remotes(self):
+        """Refresh the list of rclone remotes."""
+        self.remote_combo.clear()
+        remotes = self.rclone.list_remotes()
+        
+        if remotes:
+            self.remote_combo.addItems(remotes)
+            # Try to auto-select a protondrive remote
+            for remote in remotes:
+                if 'proton' in remote.lower():
+                    self.remote_combo.setCurrentText(remote)
+                    break
+            self.remote_status.setText("✅ Remotes refreshed!")
+            self.remote_status.setStyleSheet("color: green;")
+        else:
+            self.remote_combo.addItem("⚠️ No remotes found - Configure rclone first!")
+            self.remote_status.setText("⚠️ No remotes found")
+            self.remote_status.setStyleSheet("color: orange;")
+    
     def test_remote(self):
         remote = self.remote_combo.currentText()
-        if remote == "No remotes found":
-            self.remote_status.setText("❌ No remotes configured")
+        
+        if not remote or "No remotes found" in remote:
+            self.remote_status.setText("❌ No remote selected")
             self.remote_status.setStyleSheet("color: red;")
+            QMessageBox.warning(
+                self,
+                "No Remote",
+                "<p>You need to configure an rclone remote first.</p>"
+                "<p>Click the <b>'Configure rclone'</b> button to get started.</p>"
+            )
             return
         
-        self.remote_status.setText("⏳ Testing remote...")
+        self.remote_status.setText("⏳ Testing connection to ProtonDrive...")
         self.remote_status.setStyleSheet("color: blue;")
         QApplication.processEvents()
         
@@ -143,19 +266,71 @@ class SetupWizard(QDialog):
         else:
             self.remote_status.setText(f"❌ {message}")
             self.remote_status.setStyleSheet("color: red;")
+            QMessageBox.warning(
+                self,
+                "Remote Test Failed",
+                f"<p>Could not connect to remote '{remote}'.</p>"
+                f"<p><b>Error:</b> {message}</p>"
+                "<p>Please check your rclone configuration.</p>"
+            )
     
     def validate_and_accept(self):
         remote = self.remote_combo.currentText()
         folder = self.folder_edit.text()
         
-        if remote == "No remotes found" or not remote:
-            QMessageBox.warning(self, "Invalid Configuration", 
-                              "Please select a valid rclone remote.")
+        # Validate remote
+        if not remote or "No remotes found" in remote:
+            QMessageBox.warning(
+                self,
+                "Missing Remote",
+                "<h3>⚠️ No rclone remote configured</h3>"
+                "<p>You need to set up an rclone remote first.</p>"
+                "<p><b>What to do:</b></p>"
+                "<ol>"
+                "<li>Click the <b>'Configure rclone'</b> button</li>"
+                "<li>Follow the setup instructions</li>"
+                "<li>Come back and click <b>'Refresh List'</b></li>"
+                "</ol>"
+            )
             return
         
+        # Validate folder
         if not folder:
-            QMessageBox.warning(self, "Invalid Configuration",
-                              "Please select a local sync folder.")
+            QMessageBox.warning(
+                self,
+                "Missing Folder",
+                "<p>Please select a local sync folder.</p>"
+                "<p>This is where your ProtonDrive files will be stored.</p>"
+            )
+            return
+        
+        # Create folder if it doesn't exist
+        folder_path = Path(folder)
+        try:
+            folder_path.mkdir(parents=True, exist_ok=True)
+        except Exception as e:
+            QMessageBox.critical(
+                self,
+                "Folder Error",
+                f"<p>Could not create folder:</p>"
+                f"<pre>{folder}</pre>"
+                f"<p><b>Error:</b> {str(e)}</p>"
+            )
+            return
+        
+        # Confirm configuration
+        confirm = QMessageBox.question(
+            self,
+            "Confirm Setup",
+            f"<h3>Ready to start syncing!</h3>"
+            f"<p><b>Remote:</b> {remote}</p>"
+            f"<p><b>Local folder:</b> {folder}</p>"
+            f"<p><b>Auto sync:</b> {'Enabled' if self.auto_sync_check.isChecked() else 'Disabled'}</p>"
+            f"<p>Is this correct?</p>",
+            QMessageBox.Yes | QMessageBox.No
+        )
+        
+        if confirm != QMessageBox.Yes:
             return
         
         # Save configuration
@@ -167,6 +342,15 @@ class SetupWizard(QDialog):
         })
         self.config.mark_setup_complete()
         self.config.save_config()
+        
+        # Success message
+        QMessageBox.information(
+            self,
+            "Setup Complete!",
+            "<h3>🎉 You're all set!</h3>"
+            "<p>ProtonDrive Sync is now configured.</p>"
+            "<p>Your files will start syncing in a moment.</p>"
+        )
         
         self.accept()
 

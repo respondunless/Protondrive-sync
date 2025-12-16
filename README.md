@@ -6,6 +6,177 @@ A Python-based desktop application for syncing ProtonDrive files to your local s
 ![Python](https://img.shields.io/badge/python-3.8+-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-Linux-lightgrey.svg)
 
+---
+
+## 🎉 **SUPER EASY INSTALLATION** - For New Linux Users!
+
+> **New to Linux?** No problem! We've made installation incredibly simple. Just run one command and you're done! 🚀
+
+### One-Command Install (Recommended)
+
+Choose any of these options:
+
+**Option 1:** Using curl
+```bash
+curl -sSL https://raw.githubusercontent.com/respondunless/Protondrive-sync/main/install.sh | bash
+```
+
+**Option 2:** Using wget
+```bash
+wget -qO- https://raw.githubusercontent.com/respondunless/Protondrive-sync/main/install.sh | bash
+```
+
+**Option 3:** Clone and install
+```bash
+git clone https://github.com/respondunless/Protondrive-sync.git
+cd Protondrive-sync
+./install.sh
+```
+
+### What the Installer Does
+
+The installer is **super friendly** and will:
+
+✅ Detect your Linux distribution automatically  
+✅ Install ALL dependencies (Python, PyQt5, rclone, etc.)  
+✅ Set up the application properly  
+✅ Add ProtonDrive Sync to your application menu  
+✅ Optionally set up autostart on login  
+✅ Guide you through rclone configuration  
+✅ Launch the app for you!
+
+### What to Expect
+
+```
+╔════════════════════════════════════════════════════════════╗
+║                                                            ║
+║           ProtonDrive Sync - Easy Installer 🚀            ║
+║                                                            ║
+╚════════════════════════════════════════════════════════════╝
+
+Welcome to the ProtonDrive Sync installer!
+This script will guide you through a super easy installation.
+
+→ Detecting your Linux distribution...
+✓ Detected: Your Linux Distro
+
+→ Installing dependencies 📦
+✓ System dependencies installed
+✓ Python packages ready
+
+→ Installing application files...
+✓ Application files installed
+
+→ Creating desktop integration...
+✓ Desktop entry created - app will appear in your application menu!
+
+╔════════════════════════════════════════════════════════════╗
+║                                                            ║
+║              Installation Complete! ★★★                  ║
+║                                                            ║
+╚════════════════════════════════════════════════════════════╝
+```
+
+### After Installation
+
+1. **Find the app** in your application menu (search for "ProtonDrive Sync")
+2. **Or run from terminal:** `protondrive-sync`
+3. **Follow the setup wizard** to configure your ProtonDrive connection
+4. **Start syncing!** It's that easy! 🎊
+
+### First-Time rclone Setup
+
+If you haven't configured rclone yet, the app will guide you! Just:
+
+1. Click **"Configure rclone"** button in the setup wizard
+2. Choose **'n'** for new remote
+3. Name it **'protondrive'**
+4. Select **'Proton Drive'** from the list
+5. Follow the authentication steps
+6. Done! 🎉
+
+### Uninstalling
+
+If you ever want to remove ProtonDrive Sync:
+
+```bash
+protondrive-sync-uninstall
+```
+
+Or navigate to the installation directory and run:
+```bash
+./uninstall.sh
+```
+
+The uninstaller will ask if you want to keep your configuration and data.
+
+### Troubleshooting Installation
+
+<details>
+<summary><b>Click here if you encounter installation issues</b></summary>
+
+#### "Permission denied" error
+
+Run the installer with proper permissions:
+```bash
+chmod +x install.sh
+./install.sh
+```
+
+#### "Command not found: curl" or "wget"
+
+Install curl or wget first:
+```bash
+# For Arch-based systems
+sudo pacman -S curl
+
+# For Debian/Ubuntu
+sudo apt-get install curl
+
+# For Fedora
+sudo dnf install curl
+```
+
+#### PyQt5 installation fails
+
+The installer will try to install PyQt5 via your system package manager automatically. If it still fails:
+
+```bash
+# For Arch-based systems
+sudo pacman -S python-pyqt5
+
+# For Debian/Ubuntu
+sudo apt-get install python3-pyqt5
+
+# For Fedora
+sudo dnf install python3-qt5
+```
+
+#### App doesn't appear in application menu
+
+Try updating your desktop database:
+```bash
+update-desktop-database ~/.local/share/applications/
+```
+
+Or logout and login again.
+
+#### "~/.local/bin not in PATH" warning
+
+Add this line to your `~/.bashrc` or `~/.zshrc`:
+```bash
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+Then restart your terminal or run:
+```bash
+source ~/.bashrc  # or ~/.zshrc
+```
+
+</details>
+
+---
+
 ## ✨ Features
 
 - 🖥️ **System Tray Integration** - Runs quietly in the background with easy access from system tray
@@ -42,36 +213,42 @@ Before installing ProtonDrive Sync, ensure you have:
    ```
    Follow the prompts to set up your ProtonDrive remote. See [Rclone ProtonDrive documentation](https://rclone.org/protondrive/) for details.
 
-## 🚀 Installation
+## 🚀 Manual Installation (Advanced Users)
 
-### Method 1: Install from source (Recommended)
+> **Note:** Most users should use the [Super Easy Installation](#-super-easy-installation---for-new-linux-users) method above! This section is for advanced users who want more control.
+
+### Prerequisites
+
+Ensure you have:
+- Python 3.8+
+- pip
+- rclone
+
+### Method 1: Install from source
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/protondrive-sync.git
-   cd protondrive-sync
+   git clone https://github.com/respondunless/Protondrive-sync.git
+   cd Protondrive-sync
    ```
 
 2. **Install dependencies**
    ```bash
-   pip install -r requirements.txt
+   pip install PyQt5
    ```
 
-3. **Install the application**
+3. **Run directly**
    ```bash
-   pip install -e .
+   python -m src.main
    ```
 
-### Method 2: Using pip directly
+### Method 2: Using the automated installer
 
 ```bash
-pip install PyQt5
+./install.sh
 ```
 
-Then run the application directly:
-```bash
-python -m src.main
-```
+This gives you more control over the installation process.
 
 ## 🔧 First-Time Setup
 
