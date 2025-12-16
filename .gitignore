@@ -136,3 +136,4 @@ Thumbs.db
 # Application specific
 *.log
 config.json
+src/gui_backup.py
