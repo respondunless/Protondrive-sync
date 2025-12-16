@@ -72,7 +72,7 @@ fi
 
 # Check 5: Project files
 echo -n "Checking project files... "
-if [ -f "src/main.py" ] && [ -f "src/gui.py" ] && [ -f "requirements.txt" ]; then
+if [ -f "protondrive_sync/main.py" ] && [ -f "protondrive_sync/gui.py" ] && [ -f "requirements.txt" ]; then
     echo "✓ PASS"
     ((CHECKS_PASSED++))
 else
@@ -105,7 +105,7 @@ if [ $CHECKS_FAILED -eq 0 ]; then
     echo "To start the application:"
     echo "  ./run.sh"
     echo "  OR"
-    echo "  python3 -m src.main"
+    echo "  python3 -m protondrive_sync.main"
     exit 0
 else
     echo "✗ Some checks failed. Please fix the issues above."

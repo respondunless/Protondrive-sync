@@ -38,7 +38,7 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            "protondrive-sync=src.main:main",
+            "protondrive-sync=protondrive_sync.main:main",
         ],
     },
     include_package_data=True,

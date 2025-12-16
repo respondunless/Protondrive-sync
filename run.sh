@@ -9,7 +9,7 @@ echo "=================================="
 echo ""
 
 # Check if we're in the right directory
-if [ ! -f "src/main.py" ]; then
+if [ ! -f "protondrive_sync/main.py" ]; then
     echo "Error: Must be run from the protondrive-sync directory"
     echo "Usage: cd /path/to/protondrive-sync && ./run.sh"
     exit 1
@@ -58,4 +58,4 @@ echo "=================================="
 echo ""
 
 # Run the application
-python3 -m src.main
+python3 -m protondrive_sync.main

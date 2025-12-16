@@ -95,7 +95,7 @@ If you haven't configured rclone yet, the app will guide you! Just:
 5. Follow the authentication steps
 6. Done! 🎉
 
-**📚 Detailed Setup Guide:** For comprehensive ProtonDrive setup instructions, including troubleshooting and security best practices, see [PROTONDRIVE_SETUP.md](PROTONDRIVE_SETUP.md)
+**📚 Detailed Setup Guide:** For comprehensive ProtonDrive setup instructions, including troubleshooting and security best practices, see [PROTONDRIVE_SETUP.md](docs/setup/PROTONDRIVE_SETUP.md)
 
 ### Uninstalling
 
@@ -410,22 +410,58 @@ All changes are reviewed before being applied!
 
 ## 🗂️ Project Structure
 
+This project follows a clean, organized structure for easy navigation and maintenance:
+
 ```
 protondrive-sync/
-├── src/
-│   ├── __init__.py           # Package initialization
-│   ├── main.py               # Application entry point
-│   ├── config_manager.py     # Configuration handling
-│   ├── rclone_manager.py     # Rclone integration
-│   ├── sync_engine.py        # Sync logic and threading
-│   ├── gui.py                # Main window and setup wizard
-│   ├── tray.py               # System tray implementation
-│   └── utils.py              # Helper functions
-├── requirements.txt          # Python dependencies
-├── setup.py                  # Installation script
-├── .gitignore               # Git ignore rules
-└── README.md                # This file
+├── protondrive_sync/            # Main application package
+│   ├── __init__.py              # Package initialization
+│   ├── main.py                  # Application entry point
+│   ├── config_manager.py        # Configuration handling
+│   ├── rclone_manager.py        # Rclone integration
+│   ├── sync_engine.py           # Sync logic and threading
+│   ├── gui.py                   # Main window and setup wizard
+│   ├── tray.py                  # System tray implementation
+│   └── utils.py                 # Helper functions
+│
+├── docs/                        # Documentation (organized by category)
+│   ├── setup/                   # Installation and setup guides
+│   │   ├── INSTALLATION_GUIDE.md (& .pdf)
+│   │   ├── QUICK_START.md (& .pdf)
+│   │   └── PROTONDRIVE_SETUP.md (& .pdf)
+│   ├── features/                # Feature documentation
+│   │   ├── ENHANCEMENT_SUMMARY.md (& .pdf)
+│   │   ├── selective-sync.md (& .pdf)
+│   │   └── authentication.md (& .pdf)
+│   ├── deployment/              # Deployment and packaging
+│   │   ├── cachyos-optimization.md (& .pdf)
+│   │   └── packaging.md (& .pdf)
+│   └── STRUCTURE.md             # Detailed project structure documentation
+│
+├── requirements.txt             # Python dependencies
+├── setup.py                     # Installation script
+├── run.sh                       # Application launcher
+├── install.sh                   # System installer
+├── uninstall.sh                 # Uninstaller
+├── verify_setup.sh              # Setup verification
+├── .gitignore                   # Git ignore rules
+├── LICENSE                      # MIT License
+└── README.md                    # This file
 ```
+
+**📖 For detailed information about the project structure and organization, see [docs/STRUCTURE.md](docs/STRUCTURE.md)**
+
+### Documentation Organization
+
+All documentation is organized in the `docs/` directory by category:
+
+- **`docs/setup/`** - Installation, setup, and quick start guides
+- **`docs/features/`** - Feature-specific documentation (selective sync, authentication, etc.)
+- **`docs/deployment/`** - Deployment, packaging, and platform-specific optimizations
+
+Each document is available in both Markdown (.md) and PDF (.pdf) formats for your convenience.
+
+**Note:** This structure matches our FlexibleDietMenu project for consistency across our repositories.
 
 ## 🔍 Configuration
 
