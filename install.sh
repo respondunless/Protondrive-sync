@@ -31,6 +31,10 @@ INSTALL_TYPE=""
 AUTO_START=false
 APP_NAME="ProtonDrive Sync"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+TEMP_DOWNLOAD_DIR=""
+CLEANUP_NEEDED=false
+GITHUB_REPO="https://github.com/respondunless/Protondrive-sync"
+GITHUB_BRANCH="main"
 
 #######################
 # Helper Functions
@@ -86,6 +90,122 @@ ask_yes_no() {
             * ) echo -e "${RED}Please answer yes or no.${NC}";;
         esac
     done
+}
+
+detect_and_download_source() {
+    # Check if we're running from a cloned repository or standalone
+    if [ -d "$SCRIPT_DIR/protondrive_sync" ] && [ -f "$SCRIPT_DIR/README.md" ]; then
+        print_info "Running from local repository"
+        return 0
+    fi
+    
+    print_step "Detecting installation source..."
+    print_warning "Source files not found locally - downloading from GitHub..."
+    
+    # Check if we have curl or wget
+    if ! command -v curl &>/dev/null && ! command -v wget &>/dev/null; then
+        print_error "Neither curl nor wget is available"
+        print_info "Please install curl or wget and try again"
+        exit 1
+    fi
+    
+    # Check if we have unzip or tar
+    if ! command -v unzip &>/dev/null && ! command -v tar &>/dev/null; then
+        print_error "Neither unzip nor tar is available"
+        print_info "Please install unzip or tar and try again"
+        exit 1
+    fi
+    
+    # Create temporary directory
+    TEMP_DOWNLOAD_DIR=$(mktemp -d)
+    CLEANUP_NEEDED=true
+    
+    print_info "Downloading repository to temporary location..."
+    
+    # Try to download the repository
+    local download_url="${GITHUB_REPO}/archive/refs/heads/${GITHUB_BRANCH}.zip"
+    local tar_url="${GITHUB_REPO}/archive/refs/heads/${GITHUB_BRANCH}.tar.gz"
+    
+    cd "$TEMP_DOWNLOAD_DIR" || {
+        print_error "Failed to change to temporary directory"
+        exit 1
+    }
+    
+    # Try with curl first (supports redirects better)
+    if command -v curl &>/dev/null; then
+        if curl -L -o "repo.zip" "$download_url" 2>/dev/null && [ -s "repo.zip" ]; then
+            print_success "Downloaded repository archive"
+            if command -v unzip &>/dev/null; then
+                unzip -q "repo.zip" || {
+                    print_error "Failed to extract repository"
+                    exit 1
+                }
+            else
+                print_error "unzip not available"
+                exit 1
+            fi
+        elif curl -L -o "repo.tar.gz" "$tar_url" 2>/dev/null && [ -s "repo.tar.gz" ]; then
+            print_success "Downloaded repository archive (tar.gz)"
+            tar -xzf "repo.tar.gz" || {
+                print_error "Failed to extract repository"
+                exit 1
+            }
+        else
+            print_error "Failed to download repository from GitHub"
+            exit 1
+        fi
+    # Fall back to wget
+    elif command -v wget &>/dev/null; then
+        if wget -q -O "repo.zip" "$download_url" 2>/dev/null && [ -s "repo.zip" ]; then
+            print_success "Downloaded repository archive"
+            if command -v unzip &>/dev/null; then
+                unzip -q "repo.zip" || {
+                    print_error "Failed to extract repository"
+                    exit 1
+                }
+            else
+                print_error "unzip not available"
+                exit 1
+            fi
+        elif wget -q -O "repo.tar.gz" "$tar_url" 2>/dev/null && [ -s "repo.tar.gz" ]; then
+            print_success "Downloaded repository archive (tar.gz)"
+            tar -xzf "repo.tar.gz" || {
+                print_error "Failed to extract repository"
+                exit 1
+            }
+        else
+            print_error "Failed to download repository from GitHub"
+            exit 1
+        fi
+    fi
+    
+    # Find the extracted directory
+    local extracted_dir=$(find . -maxdepth 1 -type d -name "Protondrive-sync-*" | head -n 1)
+    if [ -z "$extracted_dir" ]; then
+        print_error "Could not find extracted repository directory"
+        exit 1
+    fi
+    
+    # Update SCRIPT_DIR to point to the downloaded source
+    SCRIPT_DIR="$TEMP_DOWNLOAD_DIR/$extracted_dir"
+    
+    # Verify the source files exist
+    if [ ! -d "$SCRIPT_DIR/protondrive_sync" ]; then
+        print_error "Downloaded repository does not contain expected files"
+        print_info "Expected to find: protondrive_sync directory"
+        exit 1
+    fi
+    
+    print_success "Repository downloaded and ready for installation"
+    print_info "Using source from: $SCRIPT_DIR"
+}
+
+cleanup_temp_files() {
+    if [ "$CLEANUP_NEEDED" = true ] && [ -n "$TEMP_DOWNLOAD_DIR" ] && [ -d "$TEMP_DOWNLOAD_DIR" ]; then
+        print_step "Cleaning up temporary files..."
+        rm -rf "$TEMP_DOWNLOAD_DIR"
+        print_success "Temporary files removed"
+    fi
 }
 
 detect_distro() {
@@ -454,12 +574,18 @@ setup_config_directory() {
 #######################
 
 main() {
+    # Set up cleanup trap
+    trap cleanup_temp_files EXIT
+    
     clear
     print_header
     
     echo -e "${WHITE}Welcome to the ProtonDrive Sync installer!${NC}"
     echo -e "${CYAN}This script will guide you through a super easy installation.${NC}"
     echo ""
+    
+    # Detect and download source if needed
+    detect_and_download_source
     
     # Detect distribution
     detect_distro
@@ -606,6 +732,9 @@ main() {
     echo ""
     echo -e "${CYAN}Thank you for using ProtonDrive Sync! ${ROCKET}${NC}"
     echo ""
+    
+    # Cleanup temporary files
+    cleanup_temp_files
     
     # Cleanup sudo refresh process
     if [[ -n "${SUDO_REFRESH_PID:-}" ]]; then
