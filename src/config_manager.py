@@ -19,7 +19,21 @@ class ConfigManager:
         "sync_interval_minutes": 30,
         "first_run": True,
         "notifications_enabled": True,
-        "log_level": "INFO"
+        "log_level": "INFO",
+        # Selective sync settings
+        "selective_sync_enabled": False,
+        "sync_mode": "full",  # "full", "selective_include", "selective_exclude"
+        "included_folders": [],  # List of folders to sync (when sync_mode is selective_include)
+        "excluded_folders": [],  # List of folders to exclude (when sync_mode is selective_exclude)
+        # Safety features
+        "confirm_large_sync": True,
+        "large_sync_threshold_mb": 1000,  # Warn if sync size exceeds this
+        "bandwidth_limit_kbps": 0,  # 0 = no limit
+        "dry_run_first_sync": True,
+        # ProtonDrive authentication
+        "protondrive_configured": False,
+        "protondrive_remote_tested": False,
+        "setup_completed": False
     }
     
     def __init__(self, config_dir: Optional[Path] = None):
@@ -133,3 +147,97 @@ class ConfigManager:
             Configuration dictionary
         """
         return self.config.copy()
+    
+    def add_included_folder(self, folder_path: str) -> None:
+        """Add a folder to the included folders list.
+        
+        Args:
+            folder_path: Path of folder to include
+        """
+        included = self.config.get("included_folders", [])
+        if folder_path not in included:
+            included.append(folder_path)
+            self.config["included_folders"] = included
+    
+    def remove_included_folder(self, folder_path: str) -> None:
+        """Remove a folder from the included folders list.
+        
+        Args:
+            folder_path: Path of folder to remove
+        """
+        included = self.config.get("included_folders", [])
+        if folder_path in included:
+            included.remove(folder_path)
+            self.config["included_folders"] = included
+    
+    def add_excluded_folder(self, folder_path: str) -> None:
+        """Add a folder to the excluded folders list.
+        
+        Args:
+            folder_path: Path of folder to exclude
+        """
+        excluded = self.config.get("excluded_folders", [])
+        if folder_path not in excluded:
+            excluded.append(folder_path)
+            self.config["excluded_folders"] = excluded
+    
+    def remove_excluded_folder(self, folder_path: str) -> None:
+        """Remove a folder from the excluded folders list.
+        
+        Args:
+            folder_path: Path of folder to remove
+        """
+        excluded = self.config.get("excluded_folders", [])
+        if folder_path in excluded:
+            excluded.remove(folder_path)
+            self.config["excluded_folders"] = excluded
+    
+    def get_sync_filters(self) -> List[str]:
+        """Get rclone filter arguments based on sync settings.
+        
+        Returns:
+            List of rclone filter arguments
+        """
+        filters = []
+        sync_mode = self.config.get("sync_mode", "full")
+        
+        if sync_mode == "selective_include":
+            included = self.config.get("included_folders", [])
+            for folder in included:
+                # Include this folder and everything in it
+                filters.append(f"--include={folder}/**")
+                filters.append(f"--include={folder}")
+            # Exclude everything else
+            if included:
+                filters.append("--exclude=*")
+        
+        elif sync_mode == "selective_exclude":
+            excluded = self.config.get("excluded_folders", [])
+            for folder in excluded:
+                # Exclude this folder and everything in it
+                filters.append(f"--exclude={folder}/**")
+                filters.append(f"--exclude={folder}")
+        
+        return filters
+    
+    def is_protondrive_configured(self) -> bool:
+        """Check if ProtonDrive remote is configured and tested.
+        
+        Returns:
+            True if configured and tested, False otherwise
+        """
+        return (
+            self.config.get("protondrive_configured", False) and
+            self.config.get("protondrive_remote_tested", False)
+        )
+    
+    def mark_protondrive_configured(self, tested: bool = False) -> None:
+        """Mark ProtonDrive as configured and optionally tested.
+        
+        Args:
+            tested: Whether the remote has been tested
+        """
+        self.config["protondrive_configured"] = True
+        if tested:
+            self.config["protondrive_remote_tested"] = True
+        self.save_config()

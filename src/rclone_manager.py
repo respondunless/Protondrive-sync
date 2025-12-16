@@ -120,7 +120,9 @@ class RcloneManager:
         source: str,
         destination: str,
         progress_callback: Optional[Callable[[str], None]] = None,
-        dry_run: bool = False
+        dry_run: bool = False,
+        filters: Optional[List[str]] = None,
+        bandwidth_limit_kbps: int = 0
     ) -> Tuple[bool, str]:
         """Perform sync operation.
         
@@ -129,6 +131,8 @@ class RcloneManager:
             destination: Destination path (remote:path or local path)
             progress_callback: Optional callback for progress updates
             dry_run: If True, perform a dry run
+            filters: Optional list of rclone filter arguments
+            bandwidth_limit_kbps: Bandwidth limit in KB/s (0 = no limit)
             
         Returns:
             Tuple of (success, message)
@@ -144,6 +148,12 @@ class RcloneManager:
         
         if dry_run:
             cmd.append("--dry-run")
+        
+        if filters:
+            cmd.extend(filters)
+        
+        if bandwidth_limit_kbps > 0:
+            cmd.extend(["--bwlimit", f"{bandwidth_limit_kbps}k"])
         
         try:
             self.logger.info(f"Starting sync: {source} -> {destination}")
@@ -220,3 +230,193 @@ class RcloneManager:
             True if syncing, False otherwise
         """
         return self.process is not None and self.process.poll() is None
+    
+    def get_remote_type(self, remote_name: str) -> Optional[str]:
+        """Get the type of a remote (e.g., 'protondrive', 's3', 'drive').
+        
+        Args:
+            remote_name: Name of the remote
+            
+        Returns:
+            Remote type string or None if error
+        """
+        try:
+            result = subprocess.run(
+                ["rclone", "config", "show", remote_name],
+                capture_output=True,
+                text=True,
+                timeout=10
+            )
+            if result.returncode == 0:
+                # Parse the config to find type
+                for line in result.stdout.split('\n'):
+                    if line.strip().startswith('type ='):
+                        return line.split('=')[1].strip()
+            return None
+        except Exception as e:
+            self.logger.error(f"Error getting remote type: {e}")
+            return None
+    
+    def has_protondrive_remote(self) -> Tuple[bool, Optional[str]]:
+        """Check if any ProtonDrive remote is configured.
+        
+        Returns:
+            Tuple of (has_protondrive, remote_name)
+        """
+        remotes = self.list_remotes()
+        for remote in remotes:
+            remote_type = self.get_remote_type(remote)
+            if remote_type and 'proton' in remote_type.lower():
+                return True, remote
+        return False, None
+    
+    def list_folders(self, remote_name: str, path: str = "") -> List[Dict[str, str]]:
+        """List folders in a remote path.
+        
+        Args:
+            remote_name: Name of the remote
+            path: Path within the remote (empty string for root)
+            
+        Returns:
+            List of dictionaries with folder info (name, path, size, modtime)
+        """
+        try:
+            remote_path = f"{remote_name}:{path}"
+            result = subprocess.run(
+                ["rclone", "lsf", remote_path, "--dirs-only", "--format", "p"],
+                capture_output=True,
+                text=True,
+                timeout=30
+            )
+            
+            if result.returncode == 0:
+                folders = []
+                for line in result.stdout.strip().split('\n'):
+                    if line:
+                        # Remove trailing slash
+                        folder_name = line.rstrip('/')
+                        full_path = f"{path}/{folder_name}" if path else folder_name
+                        folders.append({
+                            "name": folder_name,
+                            "path": full_path,
+                            "full_path": f"{remote_name}:{full_path}"
+                        })
+                return folders
+            else:
+                self.logger.error(f"Error listing folders: {result.stderr}")
+                return []
+        except Exception as e:
+            self.logger.error(f"Error listing folders: {e}")
+            return []
+    
+    def get_folder_tree(self, remote_name: str, max_depth: int = 3) -> List[Dict[str, any]]:
+        """Get a tree structure of folders in the remote.
+        
+        Args:
+            remote_name: Name of the remote
+            max_depth: Maximum depth to traverse
+            
+        Returns:
+            List of folder dictionaries with nested children
+        """
+        def build_tree(path: str = "", depth: int = 0):
+            if depth >= max_depth:
+                return []
+            
+            folders = self.list_folders(remote_name, path)
+            result = []
+            
+            for folder in folders:
+                folder_item = {
+                    "name": folder["name"],
+                    "path": folder["path"],
+                    "full_path": folder["full_path"],
+                    "children": build_tree(folder["path"], depth + 1)
+                }
+                result.append(folder_item)
+            
+            return result
+        
+        return build_tree()
+    
+    def estimate_sync_size(
+        self,
+        source: str,
+        destination: str,
+        filters: Optional[List[str]] = None
+    ) -> Tuple[bool, Dict[str, any]]:
+        """Estimate the size of data that would be synced.
+        
+        Args:
+            source: Source path
+            destination: Destination path
+            filters: Optional list of rclone filter arguments
+            
+        Returns:
+            Tuple of (success, stats_dict)
+        """
+        cmd = [
+            "rclone", "size",
+            source,
+            "--json"
+        ]
+        
+        if filters:
+            cmd.extend(filters)
+        
+        try:
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=60
+            )
+            
+            if result.returncode == 0:
+                import json
+                stats = json.loads(result.stdout)
+                return True, {
+                    "bytes": stats.get("bytes", 0),
+                    "count": stats.get("count", 0),
+                    "size_mb": stats.get("bytes", 0) / (1024 * 1024),
+                    "size_gb": stats.get("bytes", 0) / (1024 * 1024 * 1024)
+                }
+            else:
+                self.logger.error(f"Error estimating size: {result.stderr}")
+                return False, {}
+        except Exception as e:
+            self.logger.error(f"Error estimating size: {e}")
+            return False, {}
+    
+    def configure_protondrive(self) -> Tuple[bool, str]:
+        """Launch interactive ProtonDrive configuration.
+        
+        Returns:
+            Tuple of (success, message)
+        """
+        try:
+            # Launch rclone config in a terminal
+            import os
+            
+            # Try different terminal emulators
+            terminals = [
+                ['x-terminal-emulator', '-e'],
+                ['gnome-terminal', '--'],
+                ['konsole', '-e'],
+                ['xfce4-terminal', '-e'],
+                ['xterm', '-e'],
+                ['alacritty', '-e'],
+                ['kitty', '-e']
+            ]
+            
+            for term in terminals:
+                try:
+                    subprocess.Popen(term + ['rclone', 'config'])
+                    return True, "rclone config launched in terminal"
+                except FileNotFoundError:
+                    continue
+            
+            return False, "Could not find a terminal emulator to launch rclone config"
+            
+        except Exception as e:
+            return False, f"Error launching rclone config: {str(e)}"

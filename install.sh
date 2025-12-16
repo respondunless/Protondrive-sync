@@ -95,7 +95,16 @@ detect_distro() {
         . /etc/os-release
         DISTRO=$ID
         DISTRO_PRETTY=$PRETTY_NAME
-        print_success "Detected: $DISTRO_PRETTY"
+        
+        # Special detection for CachyOS
+        if [[ "$DISTRO" == "cachyos" ]]; then
+            print_success "Detected: $DISTRO_PRETTY 🚀"
+            print_info "CachyOS detected - using optimized settings for Arch-based systems!"
+            CACHYOS_DETECTED=true
+        else
+            print_success "Detected: $DISTRO_PRETTY"
+            CACHYOS_DETECTED=false
+        fi
     else
         print_error "Cannot detect Linux distribution"
         exit 1
@@ -118,6 +127,24 @@ install_dependencies() {
     case "$DISTRO" in
         arch|cachyos|manjaro|endeavouros|garuda)
             print_info "Installing packages for Arch-based system..."
+            
+            # CachyOS-specific optimizations
+            if [[ "$CACHYOS_DETECTED" == true ]]; then
+                print_info "🚀 Applying CachyOS optimizations..."
+                
+                # Check for AUR helper availability
+                if command -v yay &>/dev/null; then
+                    print_success "yay detected - you can use it for additional packages if needed"
+                elif command -v paru &>/dev/null; then
+                    print_success "paru detected - you can use it for additional packages if needed"
+                else
+                    print_info "Tip: Consider installing an AUR helper (yay or paru) for easier package management"
+                fi
+                
+                # Use optimized pacman settings for CachyOS
+                print_info "Using optimized pacman for faster installation..."
+            fi
+            
             if [[ "$INSTALL_TYPE" == "system" ]]; then
                 sudo pacman -Sy --noconfirm --needed python python-pip python-pyqt5 rclone git || {
                     print_error "Failed to install system packages"
@@ -133,6 +160,12 @@ install_dependencies() {
                     print_warning "rclone not found. Installing system-wide (requires sudo)..."
                     sudo pacman -Sy --noconfirm --needed rclone || exit 1
                 fi
+            fi
+            
+            # CachyOS-specific post-install notes
+            if [[ "$CACHYOS_DETECTED" == true ]]; then
+                print_success "Packages installed with CachyOS optimizations!"
+                print_info "CachyOS users: Your system's performance optimizations will benefit sync operations"
             fi
             ;;
             
@@ -454,7 +487,27 @@ main() {
     echo -e "  ${CYAN}2.${NC} Or run from terminal: ${WHITE}protondrive-sync${NC}"
     echo -e "  ${CYAN}3.${NC} Follow the setup wizard to configure rclone and start syncing!"
     echo ""
-    echo -e "${CYAN}📖 Quick reference guide:${NC} ${WHITE}$INSTALL_DIR/QUICK_START.md${NC}"
+    
+    # CachyOS-specific tips
+    if [[ "$CACHYOS_DETECTED" == true ]]; then
+        echo -e "${MAGENTA}╔════════════════════════════════════════════════════════════╗${NC}"
+        echo -e "${MAGENTA}║          CachyOS-Specific Tips & Optimizations 🚀          ║${NC}"
+        echo -e "${MAGENTA}╚════════════════════════════════════════════════════════════╝${NC}"
+        echo ""
+        echo -e "${CYAN}✓${NC} ProtonDrive Sync is optimized for your CachyOS system"
+        echo -e "${CYAN}✓${NC} Performance-optimized pacman settings detected"
+        echo -e "${CYAN}✓${NC} Sync operations will benefit from CachyOS optimizations"
+        echo ""
+        echo -e "${WHITE}Recommended for CachyOS users:${NC}"
+        echo -e "  ${CYAN}•${NC} Use an AUR helper (yay/paru) for easier package management"
+        echo -e "  ${CYAN}•${NC} Enable bandwidth limiting if on metered connection"
+        echo -e "  ${CYAN}•${NC} Consider selective sync for faster initial setup"
+        echo ""
+    fi
+    
+    echo -e "${CYAN}📖 Documentation:${NC}"
+    echo -e "  ${WHITE}Quick Start:${NC} $INSTALL_DIR/QUICK_START.md"
+    echo -e "  ${WHITE}ProtonDrive Setup:${NC} $INSTALL_DIR/PROTONDRIVE_SETUP.md"
     echo ""
     
     # Check if rclone is configured

@@ -95,6 +95,8 @@ If you haven't configured rclone yet, the app will guide you! Just:
 5. Follow the authentication steps
 6. Done! 🎉
 
+**📚 Detailed Setup Guide:** For comprehensive ProtonDrive setup instructions, including troubleshooting and security best practices, see [PROTONDRIVE_SETUP.md](PROTONDRIVE_SETUP.md)
+
 ### Uninstalling
 
 If you ever want to remove ProtonDrive Sync:
@@ -179,14 +181,41 @@ source ~/.bashrc  # or ~/.zshrc
 
 ## ✨ Features
 
+### Core Functionality
+- 🔐 **ProtonDrive Authentication** - Comprehensive setup wizard with step-by-step ProtonDrive configuration
+- 📁 **Selective Sync** - Choose specific folders to sync or exclude folders from sync
 - 🖥️ **System Tray Integration** - Runs quietly in the background with easy access from system tray
-- 🎨 **Clean PyQt5 GUI** - User-friendly interface for managing sync operations
-- 🔄 **Automatic Sync** - Configure interval-based automatic syncing
+- 🎨 **Enhanced PyQt5 GUI** - Modern, user-friendly multi-step wizard interface
+- 🔄 **Automatic Sync** - Configure interval-based automatic syncing with customizable intervals
 - 📝 **Manual Sync** - Trigger sync operations on-demand
-- ⚙️ **Configuration Management** - Easy setup wizard for first-time configuration
-- 📊 **Activity Log** - Real-time sync progress and activity monitoring
+
+### Advanced Features
+- 🛡️ **Safety Features**:
+  - Dry-run before first sync to preview changes
+  - Warn before syncing large amounts of data
+  - Bandwidth limiting to prevent network saturation
+  - Pause/resume sync functionality
+- 🎯 **Selective Folder Sync**:
+  - Browse ProtonDrive folder structure
+  - Select specific folders to sync
+  - Exclude folders from sync
+  - Full drive sync option
+- ⚙️ **Smart Configuration**:
+  - Automatic ProtonDrive remote detection
+  - Connection testing and validation
+  - Beginner-friendly setup wizard
+  - Configuration review before finalizing
+- 📊 **Monitoring**:
+  - Real-time sync progress with visual indicators
+  - Activity log with timestamp
+  - Sync size estimation
+  - Desktop notifications
+
+### System Integration
+- 🚀 **CachyOS Optimizations** - Special detection and optimizations for CachyOS
+- 🐧 **Multi-Distro Support** - Works on Arch, Ubuntu, Fedora, openSUSE, and derivatives
 - 🔔 **Desktop Notifications** - Get notified about sync status and completion
-- 🛡️ **Error Handling** - Graceful error handling with detailed logging
+- 🛡️ **Error Handling** - Graceful error handling with helpful error messages
 - 🧵 **Background Processing** - Non-blocking sync operations using threading
 
 ## 📋 Prerequisites
@@ -250,38 +279,102 @@ Ensure you have:
 
 This gives you more control over the installation process.
 
-## 🔧 First-Time Setup
+## 🔧 Enhanced First-Time Setup
 
-1. **Launch the application**
-   ```bash
-   protondrive-sync
-   ```
-   Or if installed locally:
-   ```bash
-   python -m src.main
-   ```
+ProtonDrive Sync now features a comprehensive multi-step setup wizard that makes configuration a breeze!
 
-2. **Setup Wizard**
-   - On first run, you'll see a setup wizard
-   - Select your ProtonDrive rclone remote from the dropdown
-   - Click "Test Remote" to verify connectivity
-   - Choose a local folder for syncing your files
-   - Configure auto-sync settings (optional)
-   - Click OK to save configuration
+### Launch the Application
 
-3. **Start Syncing**
-   - Click "Sync Now" for an immediate sync
-   - Or enable auto-sync from the settings
+```bash
+protondrive-sync
+```
+
+Or if installed locally:
+```bash
+python -m src.main
+```
+
+### Step-by-Step Setup Wizard
+
+The enhanced wizard will guide you through:
+
+#### **Step 1: ProtonDrive Authentication** 🔐
+- Automatic detection of existing ProtonDrive remotes
+- If not configured, launches guided rclone setup
+- Provides detailed instructions and help links
+- Tests connection to verify configuration
+- Beginner-friendly with clear error messages
+
+#### **Step 2: Selective Sync** 📁
+Choose your sync strategy:
+- **Full Sync** - Sync entire ProtonDrive (recommended for most users)
+- **Selective Include** - Choose specific folders to sync
+- **Selective Exclude** - Exclude specific folders from sync
+
+Features:
+- Browse ProtonDrive folder structure
+- Visual folder tree with checkboxes
+- Load folders on-demand
+- Save preferences for future syncs
+
+#### **Step 3: Local Folder** 💾
+- Select where to store your synced files
+- Default suggestion: `~/ProtonDrive`
+- Browse button for easy selection
+- Automatic folder creation
+
+#### **Step 4: Sync Settings** ⚙️
+Configure sync behavior:
+- **Auto-sync** - Enable/disable automatic background sync
+- **Sync interval** - From 5 minutes to 24 hours
+- **Safety features**:
+  - Dry-run before first sync (recommended)
+  - Warn before large syncs
+- **Bandwidth limiting** - Prevent network saturation (optional)
+
+#### **Step 5: Review & Confirm** ✅
+- Review all your settings
+- Clear summary of configuration
+- Back button to make changes
+- Finish to start syncing!
+
+### First Sync Safety
+
+ProtonDrive Sync protects you with smart defaults:
+- **Dry-run first** - See what will be synced before actual sync
+- **Size estimation** - Know how much data will be transferred
+- **Large sync warning** - Confirm before syncing >1GB of data
+- **Bandwidth limiting** - Optional speed limits
+
+### Quick Configuration Example
+
+For the impatient, here's the fastest path:
+1. Launch app → **Configure ProtonDrive Now** button
+2. Follow terminal prompts to set up rclone
+3. Click **Next** → Choose **"Sync entire ProtonDrive"**
+4. Select local folder → **Next**
+5. Keep recommended settings → **Finish**
+6. Click **"Sync Now"** and you're done! 🎉
 
 ## 📖 Usage
 
 ### Main Window
 
-The main window provides:
-- **Sync Status** - Current sync state and last sync time
-- **Configuration** - View and edit your sync settings
-- **Sync Controls** - Manual sync and cancel buttons
-- **Activity Log** - Real-time sync progress and logs
+The enhanced main window provides:
+- **Sync Status** - Current sync state, last sync time, and visual progress bar
+- **Configuration Summary**:
+  - Remote name
+  - Local folder path
+  - Sync mode (Full/Selective Include/Selective Exclude)
+  - Auto-sync status
+- **Sync Controls**:
+  - **▶️ Sync Now** - Trigger immediate sync
+  - **⏹️ Cancel** - Stop ongoing sync
+  - **⏸️ Pause** - Pause/resume sync operations
+- **Activity Log** - Real-time sync progress and logs with timestamps
+- **Enhanced Buttons**:
+  - **⚙️ Settings** - Open comprehensive setup wizard
+  - **📁 Manage Synced Folders** - Modify selective sync settings
 
 ### System Tray
 
@@ -293,13 +386,27 @@ Right-click the system tray icon for quick actions:
 
 Double-click the tray icon to open the main window.
 
-### Settings
+### Managing Synced Folders
 
-Click the "⚙️ Settings" button to:
+Click **"📁 Manage Synced Folders"** to:
+- Change sync mode (full/selective/exclude)
+- Add or remove folders from sync
+- Browse ProtonDrive folder structure
+- Update sync preferences without full reconfiguration
+
+### Settings & Configuration
+
+Click the **"⚙️ Settings"** button to access the full setup wizard where you can:
 - Change ProtonDrive remote
+- Reconfigure authentication
 - Update local sync folder
+- Modify selective sync settings
 - Enable/disable auto-sync
 - Adjust sync interval
+- Configure safety features (dry-run, large sync warnings)
+- Set bandwidth limits
+
+All changes are reviewed before being applied!
 
 ## 🗂️ Project Structure
 
@@ -331,11 +438,39 @@ Configuration is stored in `~/.config/protondrive-sync/config.json`:
     "auto_sync_enabled": true,
     "sync_interval_minutes": 30,
     "notifications_enabled": true,
-    "log_level": "INFO"
+    "log_level": "INFO",
+    
+    "selective_sync_enabled": false,
+    "sync_mode": "full",
+    "included_folders": [],
+    "excluded_folders": [],
+    
+    "confirm_large_sync": true,
+    "large_sync_threshold_mb": 1000,
+    "bandwidth_limit_kbps": 0,
+    "dry_run_first_sync": true,
+    
+    "protondrive_configured": true,
+    "protondrive_remote_tested": true,
+    "setup_completed": true
 }
 ```
 
-You can manually edit this file or use the settings dialog in the application.
+### Configuration Options
+
+- **rclone_remote** - Name of your ProtonDrive rclone remote
+- **local_folder** - Local directory for synced files
+- **auto_sync_enabled** - Enable/disable automatic background sync
+- **sync_interval_minutes** - How often to sync (5-1440 minutes)
+- **sync_mode** - Sync strategy: "full", "selective_include", or "selective_exclude"
+- **included_folders** - List of folders to sync (when using selective_include)
+- **excluded_folders** - List of folders to exclude (when using selective_exclude)
+- **confirm_large_sync** - Warn before syncing large amounts of data
+- **large_sync_threshold_mb** - Size threshold for large sync warning (MB)
+- **bandwidth_limit_kbps** - Bandwidth limit in KB/s (0 = unlimited)
+- **dry_run_first_sync** - Perform dry-run before first actual sync
+
+**Note:** It's recommended to use the GUI settings wizard instead of manually editing the config file, as the wizard validates your settings and prevents configuration errors.
 
 ## 📝 Logs
 
@@ -450,18 +585,62 @@ If you encounter issues or have questions:
 3. Open an issue on GitHub
 4. Check [Rclone documentation](https://rclone.org/protondrive/)
 
+## 🚀 CachyOS-Specific Features
+
+ProtonDrive Sync includes special optimizations for CachyOS users:
+
+### Automatic Detection
+- Installer automatically detects CachyOS
+- Displays CachyOS-specific tips and recommendations
+- Uses pacman optimizations for faster installation
+
+### Performance Benefits
+- Takes advantage of CachyOS's optimized kernel
+- Better I/O performance for sync operations
+- Improved multi-threading for parallel operations
+- Lower latency for network operations
+
+### AUR Helper Integration
+- Detects yay/paru if installed
+- Provides recommendations for package management
+- Easier installation of additional dependencies
+
+### Recommended Settings for CachyOS
+1. **Enable auto-sync** - Background performance is excellent
+2. **Use selective sync** - Take advantage of fast I/O
+3. **Consider bandwidth limits** - If gaming or streaming
+4. **Use SSD for sync folder** - Maximize CachyOS performance
+
+### Installation Notes
+The installer provides specific guidance for CachyOS users, including:
+- Optimized package installation
+- Performance tips
+- AUR helper recommendations
+- CachyOS-specific documentation references
+
 ## 🗺️ Roadmap
 
-Future enhancements planned:
+### ✅ Recently Completed
+- [x] ProtonDrive authentication wizard
+- [x] Selective folder sync
+- [x] Bandwidth limiting
+- [x] Dry-run functionality
+- [x] CachyOS optimizations
+- [x] Large sync warnings
+- [x] Pause/resume sync
 
-- [ ] Bidirectional sync support
-- [ ] Selective folder sync
+### 🔄 In Progress
 - [ ] Conflict resolution UI
-- [ ] Custom sync filters
-- [ ] Multiple remote support
-- [ ] Bandwidth limiting
 - [ ] Dark mode theme
-- [ ] Windows and macOS support
+- [ ] Enhanced sync statistics
+
+### 📋 Planned
+- [ ] Bidirectional sync support
+- [ ] Custom sync filters (advanced)
+- [ ] Multiple remote support
+- [ ] Sync scheduling (time-based)
+- [ ] File change notifications
+- [ ] Windows and macOS support (long-term)
 
 ## ℹ️ Technical Details
 
