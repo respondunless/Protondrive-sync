@@ -20,6 +20,7 @@ import webbrowser
 from .config_manager import ConfigManager
 from .rclone_manager import RcloneManager
 from .sync_engine import SyncEngine
+from .protondrive_wizard import ModernProtonDriveAuthWizard
 
 
 class ProtonDriveAuthPage(QWizardPage):
@@ -107,38 +108,16 @@ class ProtonDriveAuthPage(QWizardPage):
         self.registerField("protondrive_remote*", QLineEdit())
     
     def launch_rclone_config(self):
-        """Launch rclone config with detailed instructions."""
-        msg = QMessageBox()
-        msg.setIcon(QMessageBox.Information)
-        msg.setWindowTitle("ProtonDrive Configuration Guide")
-        msg.setText("<h3>🚀 Setting up ProtonDrive with rclone</h3>")
-        msg.setInformativeText(
-            "<p>A terminal window will open. Follow these steps carefully:</p>"
-            "<ol>"
-            "<li>Type <b>n</b> (for new remote) and press Enter</li>"
-            "<li>Enter a name like <b>protondrive</b> and press Enter</li>"
-            "<li>Scroll and find <b>Proton Drive</b> in the list (usually number 35+)</li>"
-            "<li>Enter the number for Proton Drive</li>"
-            "<li>Follow the authentication prompts</li>"
-            "<li>When asked about advanced config, type <b>n</b></li>"
-            "<li>Type <b>q</b> when done to quit</li>"
-            "</ol>"
-            "<p><b>Tip:</b> Keep your ProtonDrive email and password ready!</p>"
-            "<p style='color: #666;'><i>The terminal will open in a moment...</i></p>"
-        )
-        msg.exec_()
+        """Launch modern ProtonDrive configuration wizard."""
+        wizard = ModernProtonDriveAuthWizard(self.rclone, self)
         
-        # Launch rclone config
-        success, message = self.rclone.configure_protondrive()
-        if not success:
-            QMessageBox.warning(
-                self,
-                "Manual Configuration Required",
-                f"<p>Could not open terminal automatically.</p>"
-                f"<p><b>Error:</b> {message}</p>"
-                "<p>Please open a terminal manually and run:</p>"
-                "<pre>rclone config</pre>"
-                "<p>Then click 'Refresh' when done.</p>"
+        if wizard.exec_() == QDialog.Accepted:
+            # Configuration successful, refresh the page
+            self.refresh_check()
+        else:
+            # User cancelled
+            self.status_label.setText(
+                "<p style='color: orange;'>⚠️ Configuration cancelled. Click 'Configure ProtonDrive Now' to try again.</p>"
             )
     
     def refresh_check(self):

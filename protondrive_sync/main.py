@@ -10,7 +10,7 @@ import logging
 from .config_manager import ConfigManager
 from .rclone_manager import RcloneManager
 from .sync_engine import SyncEngine
-from .gui import MainWindow, SetupWizard
+from .gui import MainWindow, EnhancedSetupWizard
 from .tray import SystemTray
 from .utils import setup_logging
 
@@ -94,7 +94,7 @@ class ProtonDriveSyncApp:
         # Show setup wizard on first run
         if self.config.is_first_run() or not self.config.is_configured():
             self.logger.info("First run detected, showing setup wizard")
-            wizard = SetupWizard(self.config, self.rclone)
+            wizard = EnhancedSetupWizard(self.config, self.rclone)
             
             if wizard.exec_() != wizard.Accepted:
                 self.logger.info("Setup cancelled by user")
